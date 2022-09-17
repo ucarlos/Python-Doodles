@@ -14,6 +14,7 @@ from shutil import rmtree
 from time import sleep
 from textwrap import fill
 import re
+import logging
 
 # Global variables
 accepted_formats = ['.zip', '.rar', '.cbz']
@@ -84,6 +85,7 @@ def organize_doujins_by_artist():
     print_line("-", 80)
     print("Organizing Doujins by Artist...\n")
     sleep(1)
+    
     with open("output.txt", "w") as output_file:
         for file in current_directory.iterdir():
             # Skip any directories
@@ -119,7 +121,7 @@ def move_to_dummy_directory():
     sleep(1)
 
     for sub_dir in current_directory.iterdir():
-        # print(f"Working with {str(sub_dir)} ")
+        logging.debug(f"move_to_dummy_directory(): Testing {str(sub_dir)}")
         if not sub_dir.is_dir() or sub_dir == dummy_directory:
             continue
 
@@ -149,10 +151,10 @@ def move_to_dummy_directory():
         # If the folder exists, simply move the contents of the subdirectory to the new folder.
         possible_path = new_folder / sub_dir.name
 
-        # print(f"Possible path: {str(possible_path)}")
+        logging.debug(f"move_to_dummy_directory(): Possible Path: {str(possible_path)}")
         if possible_path.exists():
             for doujin in sub_dir.iterdir():
-                # print(f"Doujin Path: {str(doujin)} ")
+                logging.debug(f"move_to_dummy_directory(): Doujin Path: {str(doujin)}")
                 if doujin.is_file():
                     # Handle duplicates:
                     if Path(possible_path / doujin.name).exists():
@@ -162,6 +164,7 @@ def move_to_dummy_directory():
                         move(str(doujin), str(possible_path))
 
             # Now delete the sub_dir:
+            logging.debug(f"move_to_dummy_directory(): Deleting {str(sub_dir)}")
             rmtree(sub_dir)
         else:
             move(str(sub_dir), str(new_folder))
@@ -173,6 +176,7 @@ def main():
     # First, check if directory has formats
     # in accepted_formats list.
     # If so, then run the sort.
+    logging.basicConfig(level=logging.DEBUG)
     dummy_directory.mkdir(exist_ok=True)
     organize_doujins_by_artist()
     move_to_dummy_directory()

@@ -118,7 +118,17 @@ def contains_chinese_characters(directory_name):
 def check_and_move_if_directory_name_has_language_chars(directory,
                                                         contains_language_chraracter_callback,
                                                         language_directory_name):
-    """Check if a directory name contains characters from a specific language. If so, move it to a directory specified by the language directory name."""
+    """
+    Check if a directory name contains characters from a specific language.
+    If so, move it to a directory specified by the language directory name.
+
+    Returns True if the directory contained the language characters. Otherwise, it returns False.
+    """
+
+    # Immediately fail if the directory doesn't exist.
+    if not directory.exists():
+        return False
+
     if contains_language_chraracter_callback(directory.name):
         language_folder = dummy_directory / language_directory_name
         print(fill(f"Moving {str(directory)} to {str(language_folder)}."))
@@ -130,11 +140,18 @@ def check_and_move_if_directory_name_has_language_chars(directory,
             # If for whatever reason, The folder already exists, simply move all of its children over.
             for directory_file in directory.iterdir():
                 temp_file = new_directory_path / directory_file
+                # If the file exists in the new directory, simply delete it.
                 if temp_file.exists():
                     directory_file.unlink()
                 else:
                     directory_file.rename(temp_file)
+        else:
+            directory.rename(new_directory_path)
+
+        return True
         # move(str(directory), str(language_folder))
+    else:
+        return False
 
 
 def organize_doujins_by_artist():
@@ -179,28 +196,24 @@ def move_to_dummy_directory():
         if not sub_directory.is_dir() or sub_directory == dummy_directory:
             continue
 
-        subdirectory_name = sub_directory.name
+        # subdirectory_name = sub_directory.name
+        if contains_eastern_characters(sub_directory.name):
+            check_and_move_if_directory_name_has_language_chars(sub_directory, contains_japanese_characters, "[Japanese]")
+            check_and_move_if_directory_name_has_language_chars(sub_directory, contains_korean_characters, "[Korean]")
+            check_and_move_if_directory_name_has_language_chars(sub_directory, contains_chinese_characters, "[Chinese]")
+            continue
 
-        if contains_japanese_characters(subdirectory_name):
-            pass
-        elif contains_chinese_characters(subdirectory_name):
-            pass
-        elif contains_korean_characters(subdirectory_name):
-            pass
-
-        
         # check if the directory name is ASCII or not.
         try:
             dir_name = sub_directory.name
             dir_name.encode("latin1")
         except UnicodeEncodeError:
-            # Directory name has Japanese Characters, so place it in
-            # Japanese.
+            # Directory name contains unknown characters, so place it in the [Unknown] directory.
 
-            ja_folder = dummy_directory / "[Japanese]"
-            print(fill(f"Moving {sub_directory.name} to {ja_folder}...") + "\n")
-            ja_folder.mkdir(exist_ok=True)
-            move(str(sub_directory), str(ja_folder))
+            unknown_folder = dummy_directory / "[Unknown]"
+            print(fill(f"Moving {sub_directory.name} to {unknown_folder}...") + "\n")
+            unknown_folder.mkdir(exist_ok=True)
+            move(str(sub_directory), str(unknown_folder))
             continue
 
         # Otherwise, place it in a folder with the first
@@ -236,7 +249,8 @@ def move_to_dummy_directory():
     print_line("-", 80)
 
 
-def main():
+# Run the program.
+if __name__ == "__main__":
     # First, check if directory has formats
     # in accepted_formats list.
     # If so, then run the sort.
@@ -244,8 +258,3 @@ def main():
     dummy_directory.mkdir(exist_ok=True)
     organize_doujins_by_artist()
     move_to_dummy_directory()
-
-
-# Run the program.
-if __name__ == "__main__":
-    main()

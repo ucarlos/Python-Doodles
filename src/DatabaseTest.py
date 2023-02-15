@@ -78,7 +78,7 @@ def insert_into_dummy_table(connection, row_list):
     try:
         cursor.executemany(query, parameter_list)
         connection.commit()
-        logging.info(f"insert_into_dummy_table: Data was inserted successfully.")
+        logging.info("insert_into_dummy_table: Data was inserted successfully.")
 
     except MySQLError as error:
         print(f"Error: {error}")
@@ -113,11 +113,11 @@ def select_from_dummy_table(connection):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     options = {
-               "hostname": "localhost",
-               "username": "dummyuser",
-               "password": "ExamplePassword.",
-               "database": "test"
-               }
+        "hostname": "localhost",
+        "username": "dummyuser",
+        "password": "ExamplePassword.",
+        "database": "test"
+    }
 
     connection = create_connection(options['hostname'], options["username"], options["password"], options["database"])
 

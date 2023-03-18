@@ -22,10 +22,10 @@ SYNAPSE_USER = "matrix"
 ROOT = Path(Path.cwd().root)
 SYNAPSE_EXECUTABLE = ROOT / "home" / SYNAPSE_USER / ".local" / "bin" / "synctl"
 SYNAPSE_MAIN_DIRECTORY = ROOT / "home" / SYNAPSE_USER / "Synapse"
-YAML_PATH = SYNAPSE_MAIN_DIRECTORY / "config" / "homeserver.yaml"
+SYNAPSE_MAIN_YAML_PATH = SYNAPSE_MAIN_DIRECTORY / "config" / "homeserver.yaml"
 BASE_URL = "http://localhost:8008"
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 
 def execute_http_request(http_method, url_path, data_parameters={}, url_parameters={}):
@@ -168,19 +168,38 @@ def delete_all_registration_tokens():
 
 def start_synapse():
     """Start up the Synapse server."""
-    command = f"sudo -u {SYNAPSE_USER} {str(SYNAPSE_EXECUTABLE)} start {str(YAML_PATH)}"
+    command = f"sudo -u {SYNAPSE_USER} {str(SYNAPSE_EXECUTABLE)} start {str(SYNAPSE_MAIN_YAML_PATH)}"
     run(split(command))
 
 
 def stop_synapse():
     """Shutdown the Synapse server."""
-    command = f"sudo -u {SYNAPSE_USER} {str(SYNAPSE_EXECUTABLE)} stop {str(YAML_PATH)}"
+    command = f"sudo -u {SYNAPSE_USER} {str(SYNAPSE_EXECUTABLE)} stop {str(SYNAPSE_MAIN_YAML_PATH)}"
     run(split(command))
 
 
 def argparse_condition(key, value):
     """Predicate used by the sum function to determine if the argparse list is valid."""
     return False if key == "admin_token" or not value else True
+
+
+def execute_argument(argument_list):
+    """Hideous function to select what function to run. Please let me know if there's a better way to do this."""
+    if (argument_list.start):
+        start_synapse()
+    elif (argument_list.stop):
+        stop_synapse()
+    elif (argument_list.create_token):
+        generate_registration_token()
+    elif (argument_list.delete_token):
+        delete_registration_token(argument_list.delete_token)
+    elif (argument_list.delete_all_tokens):
+        delete_all_registration_tokens()
+    elif (argument_list.list_all_tokens):
+        print_all_registration_tokens()
+    else:
+        message = "select_function(): If you see this, you've fucked up somewhere. Please make sure that you've mapped each argument to a function in this if else chain."
+        logging.error(message)
 
 
 def is_argparse_list_valid(argparse_list):
@@ -198,13 +217,12 @@ def is_argparse_list_valid(argparse_list):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     if DEBUG_MODE:
-        ACCESS_TOKEN = "syt_dWx5c3Nlcw_OOPINcqtvkaeHnfGJcJB_3CQSYz"
+        ACCESS_TOKEN = "[insert admin token here]"
         # start_synapse()
         exit(0)
 
-    logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--start", help="Start up the Synapse server.", action="store_true")
@@ -212,7 +230,7 @@ if __name__ == "__main__":
     parser.add_argument("--create-token", help="Create a Registration token.", action="store_true")
     parser.add_argument("--delete-token", help="Delete a given Registration token.", type=str, required=False)
     parser.add_argument("--delete-all-tokens", help="Delete all existing Registration tokens.", action="store_true")
-
+    parser.add_argument("--list-all-tokens", help="List all existing Registration tokens.", action="store_true")
     parser.add_argument("admin_token",
                         help="The Admin token to use in order to authenticate the HTTP request.",
                         type=str)
@@ -221,12 +239,13 @@ if __name__ == "__main__":
 
     # admin_token = args.admin_token
     # print(f"Admin Token: {admin_token}")
-    # print(f"Args array: {args}")
+    logging.debug(f"Argument Array: {args}")
     # Only check for ONE item at a time:
 
     valid_argparse = is_argparse_list_valid(args)
     if not valid_argparse:
         print("Error: Only one option can be passed as a argument.")
         exit(1)
-
-    # print(f"Is argparse list valid? {is_argparse_list_valid(args)}")
+    else:
+        ACCESS_TOKEN = args.admin_token
+        execute_argument(args)

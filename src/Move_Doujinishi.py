@@ -13,6 +13,8 @@ from shutil import move
 from shutil import rmtree
 from time import sleep
 from textwrap import fill
+from shlex import split
+from subprocess import run
 import re
 import logging
 
@@ -21,6 +23,17 @@ accepted_formats = ['.zip', '.rar', '.cbz']
 panda_directory = Path.home() / "Pictures" / ".sadpanda"
 current_directory = Path.cwd()
 dummy_directory = Path.cwd() / "dummy_directory"
+doujinshi_directory = current_directory.parent / "Author Doujinshi"
+
+
+# variables to handle color:
+class TermColor:
+    """Small class made to display color in print statements."""
+
+    RED = "\033[91m"
+    CLEAR = "\033[0m"
+    BLUE = "\033[94m"
+    BOLD = '\033[1m'
 
 
 def capitalize_each_string_word(string):
@@ -119,12 +132,10 @@ def check_and_move_if_directory_name_has_language_chars(directory,
                                                         contains_language_chraracter_callback,
                                                         language_directory_name):
     """
-    Check if a directory name contains characters from a specific language.
-    If so, move it to a directory specified by the language directory name.
+    Check if a directory name contains characters from a specific language. If so, move it to a directory specified by the language directory name.
 
     Returns True if the directory contained the language characters. Otherwise, it returns False.
     """
-
     # Immediately fail if the directory doesn't exist.
     if not directory.exists():
         return False
@@ -247,6 +258,62 @@ def move_to_dummy_directory():
             move(str(sub_directory), str(new_folder))
 
     print_line("-", 80)
+    print(f"{TermColor.BOLD}")
+    option = input(f"Do you want to merge the subdirectories into {str(doujinshi_directory)}? [y/n] ")
+    print(f"{TermColor.CLEAR}")
+
+    if option.lower() == "y":
+        merge_into_doujinshi_directory()
+    else:
+        print("Complete!")
+
+
+def merge_into_doujinshi_directory():
+    """Merge the subdirectories found in the dummy directory into the doujinshi directory."""
+    print(f"Now merging subdirectories into {str(doujinshi_directory)}...")
+    for directory in dummy_directory.iterdir():
+        if not directory.is_dir():
+            logging.debug(f"merge_into_doujinshi_directory(): Skipping {directory.name} since it is not a directory.")
+            continue
+
+        # Generate a rsync call to merge the directory:
+        rsync_command = f"rsync -avLP --ignore-existing --remove-source-files \"{directory}\" \"{doujinshi_directory}\""
+        logging.debug(f"merge_into_doujinshi_directory(): Running the following Rsync Command: {rsync_command}")
+        split_rsync_command = split(rsync_command)
+        logging.debug(f"merge_into_doujinshi_directory(): Split Rsync Command: {split_rsync_command}")
+
+        # Now run the damn thing:
+        run(split_rsync_command)
+        # Now make sure that the directory and its contents are deleted:
+        subdirectory_contents = directory.rglob("*")
+        existing_doujinshi_file_list = []
+        for file in subdirectory_contents:
+            if (file.suffix in accepted_formats):
+                existing_doujinshi_file_list.append(file)
+
+        if existing_doujinshi_file_list:
+            print(f"{TermColor.RED}Unmoved Doujinshi have been detected in {str(directory)}{TermColor.CLEAR}")
+            # print(f"{TermColor.RED}These are most likely duplicates.{TermColor.CLEAR}")
+
+            for existing_doujinshi in existing_doujinshi_file_list:
+                print(f"{TermColor.RED}    * {existing_doujinshi.name}{TermColor.CLEAR}")
+            user_input = input("These are most likely duplicates, so would you like to delete them? [y/n] ").lower()
+            if user_input == "y":
+                for existing_doujinshi in existing_doujinshi_file_list:
+                    existing_doujinshi.unlink()
+
+                # Also delete the whole directory as well:
+                rmtree(str(directory))
+                print(f"{TermColor.BLUE}Files and directory have been deleted. :){TermColor.CLEAR}")
+            else:
+                print(f"{TermColor.BLUE}Alright, I hope you know what you're doing then.{TermColor.CLEAR}")
+        else:
+            # Delete fucking everything:
+            logging.debug(f"merge_into_doujinshi_directory(): Clearing out everything in {str(directory)}")
+            rmtree(str(directory))
+
+    print_line("-", 80)
+    print("Complete!")
 
 
 # Run the program.
@@ -254,7 +321,7 @@ if __name__ == "__main__":
     # First, check if directory has formats
     # in accepted_formats list.
     # If so, then run the sort.
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     dummy_directory.mkdir(exist_ok=True)
     organize_doujins_by_artist()
     move_to_dummy_directory()

@@ -21,13 +21,19 @@ import logging
 # Global variables
 accepted_formats = ['.zip', '.rar', '.cbz']
 panda_directory = Path.home() / "Pictures" / ".sadpanda"
-current_directory = Path.cwd()
+
+# We'll hard code the current directory since it wiped my entire directory
+# when running this script in the main .sadpanda directory:
+current_directory = panda_directory / "[SORTED]"
 dummy_directory = Path.cwd() / "dummy_directory"
 doujinshi_directory = current_directory.parent / "Author Doujinshi"
 
 
+EXIT_FAILURE = 1
+
+
 # variables to handle color:
-class TermColor:
+class TermColor(object):
     """Small class made to display color in print statements."""
 
     RED = "\033[91m"
@@ -51,7 +57,9 @@ def print_line(char, length):
 
 
 def strip_artist_name(filename):
-    """Given an string containing a filename in the form (Convention Name) [Artist_Name] Doujin Name*, Strip the Artist name using regular expressions."""
+    """Given an string containing a filename in the form (Convention Name) [Artist_Name] Doujin Name*,
+    Strip the Artist name using regular expressions.
+    """
     # First confirm that the filename follows the following formats:
     # (CONVENTION) [Group Name (Artist_Name)] Title
     # [Group Name (Artist_Name)] Title
@@ -131,9 +139,8 @@ def contains_chinese_characters(directory_name):
 def check_and_move_if_directory_name_has_language_chars(directory,
                                                         contains_language_chraracter_callback,
                                                         language_directory_name):
-    """
-    Check if a directory name contains characters from a specific language. If so, move it to a directory specified by the language directory name.
-
+    """Check if a directory name contains characters from a specific language.
+    If so, move it to a directory specified by the language directory name.
     Returns True if the directory contained the language characters. Otherwise, it returns False.
     """
     # Immediately fail if the directory doesn't exist.
@@ -166,7 +173,9 @@ def check_and_move_if_directory_name_has_language_chars(directory,
 
 
 def organize_doujins_by_artist():
-    """Organize Doujinishi by Artist Name by parsing their filename and placing the file into a directory with name {Artist_Name}."""
+    """Organize Doujinishi by Artist Name by parsing their filename and placing the file
+    into a directory with name {Artist_Name}.
+    """
     print_line("-", 80)
     print("Organizing Doujins by Artist...\n")
     sleep(1)
@@ -209,7 +218,8 @@ def move_to_dummy_directory():
 
         # subdirectory_name = sub_directory.name
         if contains_eastern_characters(sub_directory.name):
-            check_and_move_if_directory_name_has_language_chars(sub_directory, contains_japanese_characters, "[Japanese]")
+            check_and_move_if_directory_name_has_language_chars(sub_directory, contains_japanese_characters,
+                                                                "[Japanese]")
             check_and_move_if_directory_name_has_language_chars(sub_directory, contains_korean_characters, "[Korean]")
             check_and_move_if_directory_name_has_language_chars(sub_directory, contains_chinese_characters, "[Chinese]")
             continue
@@ -322,6 +332,12 @@ if __name__ == "__main__":
     # in accepted_formats list.
     # If so, then run the sort.
     logging.basicConfig(level=logging.INFO)
+
+    # First, confirm that the current directory exists. If not, bail.
+    if not current_directory.exists():
+        logging.error(f"Error: {str(current_directory)} does not exist.")
+        exit(EXIT_FAILURE)
+
     dummy_directory.mkdir(exist_ok=True)
     organize_doujins_by_artist()
     move_to_dummy_directory()

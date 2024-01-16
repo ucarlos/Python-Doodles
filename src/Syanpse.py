@@ -15,7 +15,6 @@ from datetime import datetime
 from subprocess import run
 from shlex import split
 
-
 ACCESS_TOKEN = ""
 SYNAPSE_USER = "matrix"
 
@@ -29,9 +28,9 @@ DEBUG_MODE = False
 
 
 def execute_http_request(http_method, url_path, data_parameters={}, url_parameters={}):
-    """Execute a HTTP Request using the requests library.
+    """Execute an HTTP Request using the requests library.
 
-    :param http_mthod_callback:
+    :param http_method
     :param url_path
     :param data_parameters
     :param url_parameters
@@ -81,8 +80,6 @@ def generate_registration_token():
         raise KeyError("Error: Could not find the 'token' key in the response dictionary.")
     else:
         token = response['token'] if response['token'] else ""
-        # expiry_time  = token_response['expiry_time'] if token_response['expiry_time'] else ""
-
         print(f"Your registration Token is {token}")
         print(f"It is valid until {expiration_date}")
 
@@ -94,7 +91,7 @@ def delete_registration_token(token):
     }
 
     parameters = {
-        "access_token": ACCESS_TOKEN,
+        "access_token": ACCESS_TOKEN
     }
 
     url_path = f"{BASE_URL}/_synapse/admin/v1/registration_tokens/{token}"
@@ -102,7 +99,7 @@ def delete_registration_token(token):
     response = execute_http_request("delete", url_path, data_options, parameters)
 
     if not response:
-        print(f"Token {token} has been deleted succesfully.")
+        print(f"Token {token} has been deleted successfully.")
     else:
         print(f"An Error has occurred while deleting token {token}:")
         if logging.getLogger().isEnabledFor(logging.DEBUG):
@@ -166,6 +163,11 @@ def delete_all_registration_tokens():
         print("Error: No Registration tokens found.")
 
 
+def ban_user():
+    """Ban and remove all data involving a user."""
+    pass
+
+
 def start_synapse():
     """Start up the Synapse server."""
     command = f"sudo -u {SYNAPSE_USER} {str(SYNAPSE_EXECUTABLE)} start {str(SYNAPSE_MAIN_YAML_PATH)}"
@@ -220,7 +222,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     if DEBUG_MODE:
         ACCESS_TOKEN = "[insert admin token here]"
-        # start_synapse()
         exit(0)
 
     parser = argparse.ArgumentParser()
@@ -236,11 +237,7 @@ if __name__ == "__main__":
                         type=str)
 
     args = parser.parse_args()
-
-    # admin_token = args.admin_token
-    # print(f"Admin Token: {admin_token}")
     logging.debug(f"Argument Array: {args}")
-    # Only check for ONE item at a time:
 
     valid_argparse = is_argparse_list_valid(args)
     if not valid_argparse:

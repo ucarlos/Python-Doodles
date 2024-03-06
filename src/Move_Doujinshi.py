@@ -21,19 +21,13 @@ import logging
 # Global variables
 accepted_formats = ['.zip', '.rar', '.cbz']
 panda_directory = Path.home() / "Pictures" / ".sadpanda"
-
-# We'll hard code the current directory since it wiped my entire directory
-# when running this script in the main .sadpanda directory:
-current_directory = panda_directory / "[SORTED]"
+current_directory = Path.cwd()
 dummy_directory = Path.cwd() / "dummy_directory"
-doujinshi_directory = current_directory.parent / "Author Doujinshi"
-
-
-EXIT_FAILURE = 1
+doujinshi_directory = current_directory.parent / "Doujins by Author"
 
 
 # variables to handle color:
-class TermColor(object):
+class TermColor:
     """Small class made to display color in print statements."""
 
     RED = "\033[91m"
@@ -58,8 +52,7 @@ def print_line(char, length):
 
 def strip_artist_name(filename):
     """Given an string containing a filename in the form (Convention Name) [Artist_Name] Doujin Name*,
-    Strip the Artist name using regular expressions.
-    """
+    Strip the Artist name using regular expressions."""
     # First confirm that the filename follows the following formats:
     # (CONVENTION) [Group Name (Artist_Name)] Title
     # [Group Name (Artist_Name)] Title
@@ -141,6 +134,7 @@ def check_and_move_if_directory_name_has_language_chars(directory,
                                                         language_directory_name):
     """Check if a directory name contains characters from a specific language.
     If so, move it to a directory specified by the language directory name.
+
     Returns True if the directory contained the language characters. Otherwise, it returns False.
     """
     # Immediately fail if the directory doesn't exist.
@@ -173,9 +167,7 @@ def check_and_move_if_directory_name_has_language_chars(directory,
 
 
 def organize_doujins_by_artist():
-    """Organize Doujinishi by Artist Name by parsing their filename and placing the file
-    into a directory with name {Artist_Name}.
-    """
+    """Organize Doujinishi by Artist Name by parsing their filename and placing the file into a directory with name {Artist_Name}."""
     print_line("-", 80)
     print("Organizing Doujins by Artist...\n")
     sleep(1)
@@ -195,7 +187,7 @@ def organize_doujins_by_artist():
 
                 # Create a directory with name artist name and move the file to a directory.
                 # Capitalize first character in each word:
-                artist_name = capitalize_each_string_word(artist_name)
+                artist_name = capitalize_each_string_word(artist_name).strip()
                 artist_directory = current_directory / artist_name
                 artist_directory.mkdir(exist_ok=True)
                 move(str(file), str(artist_directory))
@@ -218,10 +210,15 @@ def move_to_dummy_directory():
 
         # subdirectory_name = sub_directory.name
         if contains_eastern_characters(sub_directory.name):
-            check_and_move_if_directory_name_has_language_chars(sub_directory, contains_japanese_characters,
+            check_and_move_if_directory_name_has_language_chars(sub_directory,
+                                                                contains_japanese_characters,
                                                                 "[Japanese]")
-            check_and_move_if_directory_name_has_language_chars(sub_directory, contains_korean_characters, "[Korean]")
-            check_and_move_if_directory_name_has_language_chars(sub_directory, contains_chinese_characters, "[Chinese]")
+            check_and_move_if_directory_name_has_language_chars(sub_directory,
+                                                                contains_korean_characters,
+                                                                "[Korean]")
+            check_and_move_if_directory_name_has_language_chars(sub_directory,
+                                                                contains_chinese_characters,
+                                                                "[Chinese]")
             continue
 
         # check if the directory name is ASCII or not.
@@ -332,12 +329,6 @@ if __name__ == "__main__":
     # in accepted_formats list.
     # If so, then run the sort.
     logging.basicConfig(level=logging.INFO)
-
-    # First, confirm that the current directory exists. If not, bail.
-    if not current_directory.exists():
-        logging.error(f"Error: {str(current_directory)} does not exist.")
-        exit(EXIT_FAILURE)
-
     dummy_directory.mkdir(exist_ok=True)
     organize_doujins_by_artist()
     move_to_dummy_directory()

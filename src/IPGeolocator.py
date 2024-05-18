@@ -192,7 +192,7 @@ def add_ip_address_to_database(connection, ip_address, json_object: dict):
     select_query = """SELECT ip_address from sshd_banned_ip_database where ip_address = %s"""
 
     # PROTIP: You need a comma for every parameter you pass to execute, even it's
-    # a single parameter
+    # a single parameter.
     specified_value = (ip_address,)
 
     logging.debug(f"insert_ip_address_into_database(): Checking if IP Address {ip_address} has been logged before...")

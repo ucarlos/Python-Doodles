@@ -13,9 +13,14 @@ ZFILL_LENGTH = 2
 
 
 class RelativeDateDifference(object):
-    """Create the child function"""
+    """Simple class that displays the difference between two datetime objects."""
+
     def __init__(self, start_date, end_date, fill_length=ZFILL_LENGTH):
-        """Create the child function"""
+        """Construct a RelativeDateDifference given a start and end date range, and a fill_length
+        :param start_date: Datetime object that represents the beginning of a date range.
+        :param end_date: Datetime object that represents the end of a date range.
+        :param fill_length: The number of characters that pad each of the time fields when __str__ is called.
+        """
         self._start_date = start_date
         self._end_date = end_date
         self._fill_length = fill_length
@@ -23,7 +28,7 @@ class RelativeDateDifference(object):
         self._date_difference = end_date - start_date
 
     def __str__(self):
-        """Print the function."""
+        """Print the RelativeDateDifference object by displaying the Years, Months, and Days since the start date."""
         difference_string = (f"{self._relativedelta_date_difference.years} Years "
                              f"{str(self._relativedelta_date_difference.months).zfill(self._fill_length)} Months "
                              f"{str(self._relativedelta_date_difference.days).zfill(self._fill_length)} "
@@ -43,13 +48,11 @@ if __name__ == "__main__":
     exercise_date = datetime(2023, 9, 16)
     driving_date = datetime(2023, 10, 17)
 
-
     if current_birthday > current_date:
         # Decrement the birthday year
         current_birthday.replace(year=current_date.year - 1)
 
     # Now, provide the difference for the months:
-
     birthday_date_difference: RelativeDateDifference = RelativeDateDifference(current_birthday, current_date)
     new_years_date_difference: RelativeDateDifference = RelativeDateDifference(new_years_date, current_date)
     departure_date_difference: RelativeDateDifference = RelativeDateDifference(departure_date, current_date)
@@ -72,4 +75,3 @@ if __name__ == "__main__":
 
     print(f"Days since I started exercising    ({formatted_exercise_string}): {exercise_date_difference}")
     print(f"Days since I started driving again ({formatted_driving_string}): {driving_date_difference}")
-

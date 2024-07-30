@@ -51,7 +51,7 @@ def run_simple_command(number_list: list[str]):
     return result
 
 
-if __name__ == "__main__":
+def main():
     number_list = []
     for i in range(0, MAX_SIZE):
         random_number = randint(0, MAX_SIZE)
@@ -60,3 +60,7 @@ if __name__ == "__main__":
 
     # Now run the function:
     print(run_simple_command(number_list))
+
+
+if __name__ == "__main__":
+    main()
